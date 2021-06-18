@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,6 +13,8 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -28,6 +31,15 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.login_btn_logar);
         editEmail = findViewById(R.id.login_edit_email);
         editSenha = findViewById(R.id.login_edit_senha);
+
+        //caso usuario logado
+        if(auth.getCurrentUser()!=null){
+            String email = auth.getCurrentUser().getEmail();
+            Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+            //passar email p/ MainActivity
+            intent.putExtra("email",email);
+            startActivity(intent);
+        }
 
         btnCadastrar.setOnClickListener(view ->{
                 Intent intent = new Intent(getApplicationContext(), CadastroActivity.class);
@@ -46,17 +58,30 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
         //t -> é uma tarefa para logar
-        Task <AuthResult> T = auth.signInWithEmailAndPassword(email,senha);
+         auth.signInWithEmailAndPassword(email,senha)
 
         //listener de sucesso
-        T.addOnCompleteListener(authResult ->{
+        .addOnSuccessListener(authResult ->{
            Toast.makeText(this,"Bem vindo " ,Toast.LENGTH_SHORT).show();
            Intent intent = new Intent(getApplicationContext(),MainActivity.class);
-        });
+           startActivity(intent);
+        })
         //listener de falha
-        T.addOnCompleteListener(e ->{
+        .addOnFailureListener(e ->{
             //parametro e -> Exception
-            Toast.makeText(this,"Erro",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"Erro" + e.getClass().toString(),Toast.LENGTH_SHORT).show();
+            Log.e("Erro","Mensagem: "+ e.getMessage() + "classe"+e.getClass().toString());
+            try {
+                //disparando a exceção
+                throw e;
+            }catch (FirebaseAuthInvalidUserException userException){
+                //exceção para Email invalido
+                Toast.makeText(this, "Email inválido!", Toast.LENGTH_SHORT).show();
+            }catch (FirebaseAuthInvalidCredentialsException credException){
+                Toast.makeText(this, "Senha incorreta!", Toast.LENGTH_SHORT).show();
+            }catch (Exception ex){
+                Toast.makeText(this, "Erro!", Toast.LENGTH_SHORT).show();
+            }
         });
 
     }
