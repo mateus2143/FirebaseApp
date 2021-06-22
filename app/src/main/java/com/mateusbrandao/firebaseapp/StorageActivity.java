@@ -18,8 +18,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.internal.Storage;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.mateusbrandao.firebaseapp.model.Upload;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,6 +35,9 @@ public class StorageActivity extends AppCompatActivity {
     private ImageView imageView;
     private Uri imageUri=null;
     private EditText editNome;
+    //Referencia para im nó RealtimeDB
+    private DatabaseReference database = FirebaseDatabase.getInstance().getReference("uploads");
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +65,7 @@ public class StorageActivity extends AppCompatActivity {
             //intent implicita -> pegar um arquivo do celular
             intent.setAction(Intent.ACTION_GET_CONTENT);
             intent.setType("image/*");
+            // inicia uma Activity, e espera o retorno(foto)
             startActivityForResult(intent,1);
         });
 
@@ -68,12 +75,29 @@ public class StorageActivity extends AppCompatActivity {
         String tipo = getFileExtension(imageUri);
         //criar uma referencia para o arquivo no firebase
         Date d= new Date();
-        String nome =editNome.getText().toString()+toString()+"-"+d.getTime();
-        StorageReference imagemREF = storage.getReference().child("imagens/"+nome+"."+tipo);
+        String nome =editNome.getText().toString()+toString();
+
+        // criando referencia da imagem no Storage
+        StorageReference imagemREF = storage.getReference().child("imagens/"+nome+"-"+d.getTime()+"."+tipo);
 
         imagemREF.putFile(imageUri)
         .addOnSuccessListener(taskSnapshot -> {
             Toast.makeText(this,"Upload feito com sucesso",Toast.LENGTH_SHORT).show();
+
+            /* inserir dados da imagem no RealtimeDatabase */
+
+            //pegar a URL da imagem
+            taskSnapshot.getStorage().getDownloadUrl()
+                    .addOnSuccessListener(uri -> {
+                       // inserir no database
+                        //criando referencia(database) do upload
+                        DatabaseReference refUpload = database.push();
+                        String id = refUpload.getKey();
+
+                        Upload upload = new Upload(id,nome,uri.toString());
+                        //salvando upload no DB
+                        refUpload.setValue(upload);
+                    });
         })
         .addOnFailureListener(e ->{
             e.printStackTrace();
@@ -85,7 +109,7 @@ public class StorageActivity extends AppCompatActivity {
         ContentResolver cr = getContentResolver();
         return MimeTypeMap.getSingleton().getExtensionFromMimeType(cr.getType(imageUri));
     }
-
+    //Resultado do startActivityResult()
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
