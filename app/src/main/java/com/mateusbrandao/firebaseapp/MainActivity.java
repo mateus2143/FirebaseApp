@@ -22,6 +22,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.mateusbrandao.firebaseapp.adapter.ImageAdapter;
+import com.mateusbrandao.firebaseapp.adapter.UpdateActivity;
 import com.mateusbrandao.firebaseapp.model.Upload;
 import com.mateusbrandao.firebaseapp.util.LoadingDialog;
 
@@ -56,7 +57,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onUpdateClick(int position) {
-
+                Upload upload = listaUploads.get(position);
+                Intent intent = new Intent(getApplicationContext(), UpdateActivity.class);
+                //envia o upload para outra Activity
+                intent.putExtra("upload",upload);
+                startActivity(intent);
             }
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
@@ -111,7 +116,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 listaUploads.clear();
-                for (DataSnapshot no_filho : snapshot.getChildren()){
+                for (
+                        DataSnapshot no_filho : snapshot.getChildren()){
                     Upload upload = no_filho.getValue(Upload.class);
                     listaUploads.add(upload);
                     Log.i("DATABASE","id: " + upload.getId() + ",nome: " + upload.getNomeImagem());

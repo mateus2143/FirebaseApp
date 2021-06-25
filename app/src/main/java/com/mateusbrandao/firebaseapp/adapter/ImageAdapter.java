@@ -73,13 +73,21 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageVH> {
         public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
             menu.setHeaderTitle("Selecionar ação");
             MenuItem deletar = menu.add(0, 1, 1, "Deletar");
-            menu.add(0, 2, 2, "Atulizar");
+            MenuItem atualizar = menu.add(0, 2, 2, "Atulizar");
             //evento do clique na opção deletar
             deletar.setOnMenuItemClickListener(menuItem ->{
                if(listener!=null){
                    int position = getAbsoluteAdapterPosition();
                    listener.onDeleteClick(position);
                }
+                return true;
+            });
+
+            atualizar.setOnMenuItemClickListener(MenuItem ->{
+                if (listener!=null){
+                    int position = getAdapterPosition();
+                    listener.onUpdateClick(position);
+                }
                 return true;
             });
         }
