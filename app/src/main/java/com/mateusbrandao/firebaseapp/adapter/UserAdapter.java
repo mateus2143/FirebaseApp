@@ -16,17 +16,18 @@ import com.mateusbrandao.firebaseapp.model.User;
 
 import java.util.ArrayList;
 
-public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserVH> {
+public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserVH>  {
     private ArrayList<User> listaContatos;
     private Context context;
     private ClickAdapterUser listener;
 
-    private static final int TIPO_ADICIONAR = 0;
+    private static final int TIPO_ADICIONAR = 0 ;
     private static final int TIPO_SOLICITAR = 1;
 
     public void setListener(ClickAdapterUser listener){
         this.listener = listener;
     }
+
     public UserAdapter(Context c, ArrayList<User> lista){
         this.listaContatos = lista;
         this.context = c;
@@ -35,15 +36,16 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserVH> {
     @NonNull
     @Override
     public UserVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.user_recycler,parent,false);
-
-        if (viewType==TIPO_SOLICITAR){
+        View v = LayoutInflater.from(context)
+                .inflate(R.layout.user_recycler,
+                        parent,false );
+        if(viewType==TIPO_SOLICITAR){
             Button b = v.findViewById(R.id.user_recycler_btn_add);
             b.setText("SOLICITADO");
             b.setEnabled(false);
         }
-        return new UserVH(v);
 
+        return new UserVH(v);
     }
 
     @Override
@@ -51,14 +53,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserVH> {
 
         User u = listaContatos.get(position);
         holder.textEmail.setText(u.getEmail());
-        holder.textnome.setText(u.getNome());
-        //caso usuario nao foi adcionado
-        if (u.getReceiveRequest()) {
-            holder.btnAdicionar.setText("SOLICITADO");
-            return;
+        holder.textNome.setText(u.getNome());
+
+        //caso usuario nao foi adicionado
+        if(!u.getReceiveRequest()){
+            holder.onClick();
         }
-        //caso nao adicinou -> cria evento de click
-        holder.onClick();
+
+
     }
 
     @Override
@@ -69,22 +71,23 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserVH> {
     @Override
     public int getItemViewType(int position) {
         User contato = listaContatos.get(position);
-        //Se o usuario ja foi socilitado
+        //se o usuario ja foi solicitado
         if(contato.getReceiveRequest()){
             return TIPO_SOLICITAR;
         }
-        return super.getItemViewType(position);
+        return TIPO_ADICIONAR;
     }
 
     public class UserVH extends RecyclerView.ViewHolder{
-        TextView textnome;
+        TextView textNome;
         TextView textEmail;
         RoundedImageView imgPhoto;
         Button btnAdicionar;
 
+
         public void onClick(){
-            btnAdicionar.setOnClickListener(v->{
-                if (listener!=null){
+            btnAdicionar.setOnClickListener( v -> {
+                if(listener!=null){
                     int position = getAdapterPosition();
                     listener.adicionarContato(position);
                 }
@@ -93,21 +96,18 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserVH> {
 
         public UserVH(@NonNull View itemView) {
             super(itemView);
-            textnome = itemView.findViewById(R.id.user_recycler_nome);
+            textNome = itemView.findViewById(R.id.user_recycler_nome);
             textEmail = itemView.findViewById(R.id.user_recycler_email);
             imgPhoto = itemView.findViewById(R.id.user_recycler_photo);
             btnAdicionar = itemView.findViewById(R.id.user_recycler_btn_add);
 
-            btnAdicionar.setOnClickListener(v->{
-                if (listener!=null){
-                    int position = getAdapterPosition();
-                    listener.adicionarContato(position);
-                }
-            });
-
         }
     }
-    public interface ClickAdapterUser{
+
+    public  interface ClickAdapterUser{
         void adicionarContato(int position);
+
     }
+
+
 }

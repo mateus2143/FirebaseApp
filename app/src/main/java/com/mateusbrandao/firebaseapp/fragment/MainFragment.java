@@ -25,6 +25,8 @@ import com.mateusbrandao.firebaseapp.adapter.UserAdapter;
 import com.mateusbrandao.firebaseapp.model.User;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -51,12 +53,12 @@ public class MainFragment extends Fragment {
         // Inflate the layout for this fragment
         View layout = inflater.inflate(R.layout.fragment_main, container, false);
         userLogged = new User(auth.getCurrentUser().getUid(),
-                             auth.getCurrentUser().getEmail(),
-                             auth.getCurrentUser().getDisplayName());
+                auth.getCurrentUser().getEmail(),
+                auth.getCurrentUser().getDisplayName());
 
         recyclercontatos = layout.findViewById(R.id.frag_main_recycler_user);
 
-        userAdapter = new UserAdapter(getContext(),listaContatos);
+        userAdapter = new UserAdapter(getContext(), listaContatos);
         userAdapter.setListener(new UserAdapter.ClickAdapterUser() {
             @Override
             public void adicionarContato(int position) {
@@ -82,40 +84,33 @@ public class MainFragment extends Fragment {
         getUserDatabase();
     }
 
-    public void getUserDatabase(){
-        usersRef.addValueEventListener(new ValueEventListener() {
+    public void getUserDatabase() {
+        //Irá armazenar usuarios que ja foram solicitados
+        Map<String,User > mapUsersReq = new HashMap<String, User>();
+        requestref.child(userLogged.getId()).child("send").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                listaContatos.clear();
 
-                for (DataSnapshot filho: snapshot.getChildren()){
-                    User u = filho.getValue(User.class);
-                    // comparar com usuario Logafo
-                    if(userLogged.equals(u)){
-                       /* if (cont%2==0){
-                            u.setReceiveRequest(true);
-                        }else {
-                            u.setReceiveRequest(false);
-                        }*/
-                        listaContatos.add(u);
-
-                    }
-
+                for (DataSnapshot u : snapshot.getChildren()){
+                    User user = u.getValue(User.class);
+                    //Adicionando usuario no HashMap
+                    mapUsersReq.put(user.getId(),user);
                 }
-
-                // Verificar quais contatos ja foram solitados
-                requestref.child(userLogged.getId()).child("send").addValueEventListener(new ValueEventListener() {
+                //ler o no usuarios
+                usersRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot no_filho : snapshot.getChildren()){
-                            User usuarioSolicitado = no_filho.getValue(User.class);
-                            for(int i=0; i<listaContatos.size(); i++){
-                                if (listaContatos.get(i).equals(usuarioSolicitado)){
-                                    listaContatos.get(i).setReceiveRequest(true);
-                                }
-                            }
-                        }
-                        userAdapter.notifyDataSetChanged();
+                        listaContatos.clear();
+                       for (DataSnapshot u: snapshot.getChildren()){
+                           User user = u.getValue(User.class);
+                           if (mapUsersReq.containsKey(user.getId())){
+                               user.setReceiveRequest(true);
+                           }
+                           if(!userLogged.equals(user)){
+                               listaContatos.add(user);
+                           }
+                       }
+                       userAdapter.notifyDataSetChanged();
                     }
 
                     @Override
@@ -123,8 +118,6 @@ public class MainFragment extends Fragment {
 
                     }
                 });
-
-
             }
 
             @Override
@@ -132,7 +125,5 @@ public class MainFragment extends Fragment {
 
             }
         });
-
     }
-
 }
