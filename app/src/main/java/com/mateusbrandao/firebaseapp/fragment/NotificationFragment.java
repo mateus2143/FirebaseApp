@@ -20,6 +20,7 @@ import android.widget.EditText;
 
 import com.mateusbrandao.firebaseapp.NavigationActivity;
 import com.mateusbrandao.firebaseapp.R;
+import com.mateusbrandao.firebaseapp.util.NotificationReceiver;
 
 import static com.mateusbrandao.firebaseapp.util.App.CHANNEL_1;
 
@@ -50,10 +51,21 @@ public class NotificationFragment extends Fragment {
 
 
             /*PendingIntent contentIntent = PendingIntent.getActivity(getContext(),0,intent,0);*/
-            PendingIntent contentIntent = new NavDeepLinkBuilder.(getContext())
+            PendingIntent contentIntent = new NavDeepLinkBuilder(getContext())
                     .setComponentName(NavigationActivity.class)
                     .setGraph(R.navigation.nav_graph)
-                    .setDestination(R.id.nav_menu_lista_imagens).createPendingIntent();
+                    .setDestination(R.id.nav_menu_lista_imagens)
+                    .createPendingIntent();
+            //criar um broadcast receiver ->
+            // - Ele deve ser ativado EXPLICITAMENTE!
+            // - náo deve durar mais de 10 seg
+            Intent broadcastIntent = new Intent(getContext(), NotificationReceiver.class);
+            broadcastIntent.putExtra("toast",msg);
+
+            PendingIntent actionIntent = PendingIntent.getBroadcast(
+                    getContext(),0,broadcastIntent,PendingIntent.FLAG_UPDATE_CURRENT
+            );
+
            //criar a notificação
             Notification notification = new NotificationCompat
                     .Builder(getContext(),CHANNEL_1)
